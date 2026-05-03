@@ -360,3 +360,79 @@ input[type=range]::-webkit-slider-thumb:hover {
     font-weight: bold;
     color: var(--text-primary);
 }
+
+/* Benchmark Table Styles */
+.benchmark-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-size: 0.95rem;
+}
+
+.benchmark-table th, .benchmark-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.benchmark-table th {
+    background: rgba(255,255,255,0.05);
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+}
+
+.benchmark-table tbody tr {
+    transition: background-color 0.2s;
+}
+
+.benchmark-table tbody tr:hover {
+    background-color: rgba(255,255,255,0.05);
+}
+
+.benchmark-table tr.scenario-row {
+    background: rgba(59, 130, 246, 0.15);
+}
+
+.benchmark-table tr.scenario-row th {
+    color: var(--accent);
+    font-size: 1rem;
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
+
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: inline-block;
+}
+
+.status-stable {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.status-degraded {
+    background: rgba(245, 158, 11, 0.2);
+    color: var(--warning);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.status-failed {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--error);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.metric-pass {
+    color: var(--success);
+}
+
+.metric-fail {
+    color: var(--error);
+    font-weight: bold;
+}

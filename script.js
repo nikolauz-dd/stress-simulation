@@ -364,3 +364,160 @@ function showResultsModal() {
 document.getElementById('btn-close-modal').addEventListener('click', () => {
     document.getElementById('result-modal').style.display = 'none';
 });
+
+// --- AUTO BENCHMARK LOGIC ---
+const btnAutoSim = document.getElementById('btn-auto-sim');
+if (btnAutoSim) {
+    btnAutoSim.addEventListener('click', runAutomatedBenchmark);
+}
+
+function runAutomatedBenchmark() {
+    const section = document.getElementById('benchmark-section');
+    const container = document.getElementById('benchmark-results');
+    section.style.display = 'block';
+    container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 2rem;">Menjalankan simulasi paralel, mohon tunggu...</p>';
+
+    // Gunakan setTimeout agar UI sempat merender status "Running"
+    setTimeout(() => {
+        const scenarios = [
+            { name: 'Normal', rate: 60 },
+            { name: 'Stress', rate: 240 },
+            { name: 'Extreme', rate: 600 }
+        ];
+
+        const models = [
+            { name: 'Gemini 1.5 Flash', speed: 150, acc: 0.80 },
+            { name: 'DeepSeek V2', speed: 400, acc: 0.85 },
+            { name: 'GPT-4o', speed: 600, acc: 0.92 },
+            { name: 'Claude 3 Opus', speed: 1200, acc: 0.98 }
+        ];
+
+        const DURATION_MS = 60000;
+        const TICK_RATE = 50;
+        let html = '<table class="benchmark-table"><thead><tr><th>Model / Speed</th><th>Avg Delay</th><th>Throughput</th><th>Accuracy</th><th>Dropped</th><th>Status</th></tr></thead><tbody>';
+
+        scenarios.forEach(scen => {
+            html += `<tr class="scenario-row"><th colspan="6">Scenario: ${scen.name} (${scen.rate} pasien/menit)</th></tr>`;
+            
+            models.forEach(mod => {
+                // Menggunakan 3 node sesuai arsitektur Distributed
+                let system = new HeadlessAISystem(mod.name, 3, mod.speed);
+                let currentTime = 0;
+                let nextPatientTime = 0;
+                let patientInterval = 60000 / scen.rate;
+                let idCounter = 1;
+
+                while (currentTime < DURATION_MS) {
+                    while (currentTime >= nextPatientTime) {
+                        const isCorrect = Math.random() < mod.acc;
+                        system.addPatient({ id: idCounter++, arrivalTime: currentTime, isCorrect: isCorrect });
+                        nextPatientTime += patientInterval;
+                    }
+                    system.tick(currentTime, TICK_RATE);
+                    currentTime += TICK_RATE;
+                }
+
+                const metrics = system.getMetrics();
+                
+                // Evaluasi Kriteria
+                let failCount = 0;
+                let isDelayPass = metrics.avgDelaySec < 5;
+                let isAccPass = metrics.accuracy > 90;
+                let isDropPass = metrics.dropPct < 5;
+
+                if (!isDelayPass) failCount++;
+                if (!isAccPass) failCount++;
+                if (!isDropPass) failCount++;
+
+                let statusClass = 'status-stable';
+                let statusText = 'Stable';
+                if (failCount === 1) {
+                    statusClass = 'status-degraded';
+                    statusText = 'Degraded';
+                } else if (failCount >= 2) {
+                    statusClass = 'status-failed';
+                    statusText = 'Failed';
+                }
+
+                html += `<tr>
+                    <td><strong>${mod.name}</strong><br><small style="color:var(--text-secondary);">${mod.speed}ms</small></td>
+                    <td class="${isDelayPass ? 'metric-pass' : 'metric-fail'}">${metrics.avgDelaySec.toFixed(2)}s</td>
+                    <td>${metrics.throughput} pts/min</td>
+                    <td class="${isAccPass ? 'metric-pass' : 'metric-fail'}">${metrics.accuracy.toFixed(1)}%</td>
+                    <td class="${isDropPass ? 'metric-pass' : 'metric-fail'}">${metrics.totalDropped} (${metrics.dropPct.toFixed(1)}%)</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                </tr>`;
+            });
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }, 100);
+}
+
+class HeadlessAISystem {
+    constructor(name, numNodes, speed) {
+        this.name = name;
+        this.numNodes = numNodes;
+        this.processingSpeed = speed;
+        this.queue = [];
+        this.nodes = Array.from({length: numNodes}, (_, i) => ({ id: i+1, isBusy: false, timeUntilFree: 0, currentPatient: null }));
+        this.errors = 0;
+        this.windowDelays = [];
+        this.patientsFinished = 0;
+        this.totalReceived = 0;
+        this.totalProcessed = 0;
+        this.correctCount = 0;
+    }
+
+    addPatient(patient) {
+        this.totalReceived++;
+        if (this.queue.length >= 50) { // MAX_QUEUE = 50
+            this.errors++;
+            return false;
+        }
+        this.queue.push(patient);
+        return true;
+    }
+
+    tick(currentTime, tickRate) {
+        this.nodes.forEach(node => {
+            if (node.isBusy) {
+                node.timeUntilFree -= tickRate;
+                if (node.timeUntilFree <= 0) {
+                    this.patientsFinished++;
+                    this.totalProcessed++;
+                    if (node.currentPatient.isCorrect) {
+                        this.correctCount++;
+                    }
+                    node.isBusy = false;
+                    node.currentPatient = null;
+                }
+            }
+            if (!node.isBusy && this.queue.length > 0) {
+                const p = this.queue.shift();
+                this.windowDelays.push(currentTime - p.arrivalTime);
+                node.isBusy = true;
+                node.currentPatient = p;
+                
+                const variance = this.processingSpeed * 0.2;
+                node.timeUntilFree = this.processingSpeed + (Math.random() * variance * 2 - variance);
+            }
+        });
+    }
+
+    getMetrics() {
+        const avgDelayMs = this.windowDelays.length > 0 ? this.windowDelays.reduce((a,b)=>a+b,0) / this.windowDelays.length : 0;
+        const throughput = this.patientsFinished; 
+        const accuracyPct = this.totalProcessed > 0 ? (this.correctCount / this.totalProcessed * 100) : 100.0;
+        const dropPct = this.totalReceived > 0 ? (this.errors / this.totalReceived * 100) : 0;
+        
+        return {
+            avgDelaySec: avgDelayMs / 1000,
+            throughput: throughput,
+            accuracy: accuracyPct,
+            dropPct: dropPct,
+            totalDropped: this.errors
+        };
+    }
+}

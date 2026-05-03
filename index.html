@@ -39,6 +39,7 @@
                 <button id="btn-start" class="btn primary">Start AI Triage</button>
                 <button id="btn-stop" class="btn danger" disabled>Stop</button>
                 <button id="btn-reset" class="btn secondary">Reset</button>
+                <button id="btn-auto-sim" class="btn primary" style="background: #8b5cf6;">Run Auto Benchmark</button>
                 <div class="timer-display glass" style="display: inline-flex; align-items: center; padding: 0 15px; font-size: 1.2rem; font-weight: 600; margin-left: 15px; border-radius: 8px; color: #3b82f6; height: 40px;">
                     ⏱️ <span id="sim-timer" style="margin-left: 8px;">01:00</span>
                 </div>
@@ -151,6 +152,21 @@
                         <!-- Logs will be populated here -->
                     </tbody>
                 </table>
+            </div>
+        </section>
+
+        <!-- BENCHMARK RESULTS -->
+        <section id="benchmark-section" class="architecture-panel glass" style="display: none; margin-top: 2rem;">
+            <div class="panel-header" style="margin-bottom: 1rem;">
+                <h2>Automated Benchmark Results (Distributed Architecture - 3 Nodes)</h2>
+                <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.95rem;">
+                    Kriteria Kelulusan: <span style="color: var(--accent);">Delay &lt; 5s</span> | 
+                    <span style="color: var(--success);">Accuracy &gt; 90%</span> | 
+                    <span style="color: var(--warning);">Dropped &lt; 5%</span>
+                </p>
+            </div>
+            <div class="table-container">
+                <div id="benchmark-results"></div>
             </div>
         </section>
     </div>
