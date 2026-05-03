@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Assisted Triage System - Architecture Comparison</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style-table.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="dashboard">
+        <header>
+            <h1>AI Triage Architecture Comparison</h1>
+            <p>Single Server vs Distributed AI Models: Failure points and delay analysis</p>
+        </header>
+
+        <div class="controls-panel glass">
+            <div class="control-group">
+                <label for="arrival-rate">Patient Arrival Rate (patients/min)</label>
+                <div class="slider-container">
+                    <input type="range" id="arrival-rate" min="1" max="1500" value="60">
+                    <input type="number" id="arrival-rate-val" class="badge-input" min="1" max="1500" value="60">
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label for="ai-model">Pilih Model AI (Triage Engine)</label>
+                <select id="ai-model" class="styled-select">
+                    <option value="150" data-name="Gemini 1.5 Flash">Gemini 1.5 Flash (Super Cepat - 150ms)</option>
+                    <option value="400" data-name="DeepSeek V2">DeepSeek V2 (Cepat - 400ms)</option>
+                    <option value="600" data-name="GPT-4o">GPT-4o (Standar - 600ms)</option>
+                    <option value="1200" data-name="Claude 3 Opus">Claude 3 Opus (Akurat tapi Lambat - 1200ms)</option>
+                </select>
+            </div>
+
+            <div class="control-actions">
+                <button id="btn-start" class="btn primary">Start AI Triage</button>
+                <button id="btn-stop" class="btn danger" disabled>Stop</button>
+                <button id="btn-reset" class="btn secondary">Reset</button>
+                <div class="timer-display glass" style="display: inline-flex; align-items: center; padding: 0 15px; font-size: 1.2rem; font-weight: 600; margin-left: 15px; border-radius: 8px; color: #3b82f6; height: 40px;">
+                    ⏱️ <span id="sim-timer" style="margin-left: 8px;">01:00</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="comparison-container">
+            <!-- SINGLE ARCHITECTURE -->
+            <div class="architecture-column">
+                <div class="arch-header glass">
+                    <h2>Single AI Server</h2>
+                    <div class="failure-box" id="fail-single">
+                        <span class="fail-label">Kegagalan Prioritas (System Fail) di:</span>
+                        <span class="fail-value">Belum Gagal</span>
+                    </div>
+                </div>
+                
+                <div class="metrics-grid">
+                    <div class="metric-card glass">
+                        <h3>Decision Delay</h3>
+                        <div class="metric-value" id="s-delay">0.00s</div>
+                    </div>
+                    <div class="metric-card glass">
+                        <h3>Throughput</h3>
+                        <div class="metric-value" id="s-throughput">0 pts/min</div>
+                    </div>
+                    <div class="metric-card glass">
+                        <h3>Dropped (Failed)</h3>
+                        <div class="metric-value error" id="s-errors">0</div>
+                    </div>
+                    <div class="metric-card glass">
+                        <h3>Accuracy (%)</h3>
+                        <div class="metric-value" id="s-accuracy">100.0%</div>
+                    </div>
+                </div>
+
+                <div class="charts-stack">
+                    <div class="chart-wrapper glass">
+                        <h3>Delay vs Throughput</h3>
+                        <canvas id="chart-s-delay"></canvas>
+                    </div>
+                    <div class="chart-wrapper glass">
+                        <h3>Response Time vs Utilization</h3>
+                        <canvas id="chart-s-util"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DISTRIBUTED ARCHITECTURE -->
+            <div class="architecture-column">
+                <div class="arch-header glass">
+                    <h2>Distributed AI Servers (3 Nodes)</h2>
+                    <div class="failure-box" id="fail-dist">
+                        <span class="fail-label">Kegagalan Prioritas (System Fail) di:</span>
+                        <span class="fail-value">Belum Gagal</span>
+                    </div>
+                </div>
+                
+                <div class="metrics-grid">
+                    <div class="metric-card glass">
+                        <h3>Decision Delay</h3>
+                        <div class="metric-value" id="d-delay">0.00s</div>
+                    </div>
+                    <div class="metric-card glass">
+                        <h3>Throughput</h3>
+                        <div class="metric-value" id="d-throughput">0 pts/min</div>
+                    </div>
+                    <div class="metric-card glass">
+                        <h3>Dropped (Failed)</h3>
+                        <div class="metric-value error" id="d-errors">0</div>
+                    </div>
+                    <div class="metric-card glass">
+                        <h3>Accuracy (%)</h3>
+                        <div class="metric-value" id="d-accuracy">100.0%</div>
+                    </div>
+                </div>
+
+                <div class="charts-stack">
+                    <div class="chart-wrapper glass">
+                        <h3>Delay vs Throughput</h3>
+                        <canvas id="chart-d-delay"></canvas>
+                    </div>
+                    <div class="chart-wrapper glass">
+                        <h3>Response Time vs Utilization</h3>
+                        <canvas id="chart-d-util"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LIVE PATIENT LOGS TABLE -->
+        <section class="architecture-panel glass">
+            <div class="panel-header">
+                <h2>Live Triage AI Logs (Last 10 Events)</h2>
+            </div>
+            <div class="table-container">
+                <table class="patient-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Symptoms Evaluated</th>
+                            <th>Actual Condition</th>
+                            <th>AI Diagnosis & Priority</th>
+                            <th>Accuracy</th>
+                            <th>Single Status</th>
+                            <th>Dist Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="patient-logs">
+                        <!-- Logs will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <!-- Modal -->
+    <div id="result-modal" class="modal" style="display: none;">
+        <div class="modal-content glass">
+            <h2>Simulasi Selesai</h2>
+            <div class="modal-grid">
+                <div class="modal-col">
+                    <h3>Single Server</h3>
+                    <p>Ditangani: <span id="m-s-handled">0</span></p>
+                    <p>Akurasi: <span id="m-s-acc">0%</span></p>
+                    <p>Belum Ditangani: <span id="m-s-unhandled">0</span></p>
+                    <div id="m-s-status" style="margin-top: 1rem; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px;"></div>
+                </div>
+                <div class="modal-col">
+                    <h3>Distributed (3 Nodes)</h3>
+                    <p>Ditangani: <span id="m-d-handled">0</span></p>
+                    <p>Akurasi: <span id="m-d-acc">0%</span></p>
+                    <p>Belum Ditangani: <span id="m-d-unhandled">0</span></p>
+                    <div id="m-d-status" style="margin-top: 1rem; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px;"></div>
+                </div>
+            </div>
+            <button id="btn-close-modal" class="btn primary" style="margin-top: 1.5rem; width: 100%;">Tutup</button>
+        </div>
+    </div>
+
+    <script src="patients_data.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
