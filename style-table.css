@@ -1,0 +1,44 @@
+/* Table Styles */
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.patient-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    text-align: left;
+}
+
+.patient-table th, .patient-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.patient-table th {
+    background: rgba(0, 0, 0, 0.2);
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.patient-table tr {
+    transition: background-color 0.2s;
+}
+
+.patient-table tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Priority Colors */
+.priority-1 { color: #ef4444; font-weight: 600; } /* Resuscitation (Red) */
+.priority-2 { color: #f97316; font-weight: 600; } /* Emergent (Orange) */
+.priority-3 { color: #eab308; font-weight: 600; } /* Urgent (Yellow) */
+.priority-4 { color: #22c55e; } /* Less Urgent (Green) */
+.priority-5 { color: #3b82f6; } /* Non Urgent (Blue) */
+
+/* Status Colors */
+.status-success { color: var(--success); }
+.status-error { color: var(--error); font-weight: bold; }
+.status-processing { color: var(--warning); }
